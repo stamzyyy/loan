@@ -6,6 +6,6 @@ public record AuditRevisionResponse<T>(
         String revisionType,
         String entityName,
         Long entityId,
-        T snapshot
+        LoanRecordSnapshot snapshot
 ) {
 }

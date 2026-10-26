@@ -25,4 +25,5 @@ public class UserController {
                 .status(HttpStatus.CREATED)
                 .body(service.create(req));
     }
+
 }

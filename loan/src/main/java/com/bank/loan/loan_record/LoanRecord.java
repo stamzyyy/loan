@@ -1,6 +1,7 @@
 package com.bank.loan.loan_record;
 
 import com.bank.loan.customer.Customer;
+import com.bank.loan.exceptions.BusinessRuleViolationException;
 import com.bank.loan.installments.LoanInstallment;
 import com.bank.loan.user.User;
 import jakarta.persistence.*;
@@ -10,7 +11,10 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -93,4 +97,51 @@ public class LoanRecord {
         this.approvedBy = checker;
         this.rejectionReason = rejectionReason;
     }
+
+    public void addInstallments(LoanRecord loanRecord) {
+        BigDecimal totalRepayment = loanRecord.getAmount()
+                .add(loanRecord.getAmount()
+                        .multiply(loanRecord.getInterestRate())
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
+                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal regularAmount = totalRepayment
+                .divide(BigDecimal.valueOf(loanRecord.getTerm()), 2, RoundingMode.DOWN);
+        BigDecimal scheduledTotal = BigDecimal.ZERO;
+        LocalDate approvalDate = LocalDate.now(ZoneId.of("GMT+2"));
+
+        for (int installmentNumber = 1; installmentNumber <= loanRecord.getTerm(); installmentNumber++) {
+            BigDecimal installmentAmount = installmentNumber == loanRecord.getTerm()
+                    ? totalRepayment.subtract(scheduledTotal)
+                    : regularAmount;
+            loanRecord.addInstallment(new LoanInstallment(
+                    loanRecord,
+                    installmentNumber,
+                    installmentAmount,
+                    approvalDate.plusMonths(installmentNumber)
+            ));
+            scheduledTotal = scheduledTotal.add(installmentAmount);
+        }
+    }
+
+public LocalDate[] getStartDateAndEndDate(String period) {
+    LocalDate today = LocalDate.now(ZoneId.of("GMT+2"));
+    LocalDate startDate;
+    LocalDate endDate;
+    switch (period) {
+        case "today" -> {
+            startDate = today;
+            endDate = today.plusDays(1);
+        }
+        case "month" -> {
+            startDate = today.withDayOfMonth(1);
+            endDate = startDate.plusMonths(1);
+        }
+        default -> throw new BusinessRuleViolationException(
+                "Report period must be either 'today' or 'month'");
+    }
+
+    return new LocalDate[]{startDate, endDate};
+
+}
+
 }

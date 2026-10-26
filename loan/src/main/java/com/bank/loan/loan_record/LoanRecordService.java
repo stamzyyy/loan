@@ -22,9 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -37,6 +36,7 @@ public class LoanRecordService {
     private final LoanInstallmentRepository loanInstallmentRepository;
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
+    private final LoanRecord loanRecord;
 
     @Transactional
     public LoanRecord createLoanRecord(LoanRequestDTO loanRequest, String username) {
@@ -83,9 +83,8 @@ public class LoanRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found: " + loanRecord.getCustomer().getId()));
         ensureCustomerCanHaveAnotherActiveLoan(customer.getId());
-
         loanRecord.approve(checker);
-        addInstallments(loanRecord);
+        loanRecord.addInstallments(loanRecord);
         return loanRecordRepository.save(loanRecord);
     }
 
@@ -102,7 +101,7 @@ public class LoanRecordService {
         return loanRecordRepository.save(loanRecord);
     }
 
-    private void ensureCustomerCanHaveAnotherActiveLoan(Long customerId) {
+    public void ensureCustomerCanHaveAnotherActiveLoan(Long customerId) {
         long activeLoanCount = loanRecordRepository.countByCustomerIdAndStatusIn(customerId, ACTIVE_LOAN_STATUSES);
         if (activeLoanCount >= 2) {
             throw new BusinessRuleViolationException("A customer cannot have more than 2 active loans");
@@ -177,37 +176,25 @@ public class LoanRecordService {
         return new PaymentReceipt(amount, allocations);
     }
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "UTC")
+    @Scheduled(cron = "0 0 0 * * *", zone = "GMT+2")
     @Transactional
     public void markOverdueInstallments() {
         List<LoanInstallment> overdue = loanInstallmentRepository.findByStatusAndDueDateBefore(
-                InstallmentStatus.PENDING, LocalDate.now(ZoneOffset.UTC));
+                InstallmentStatus.PENDING, LocalDate.now(ZoneId.of("GMT+2")));
         overdue.forEach(installment -> installment.setStatus(InstallmentStatus.OVERDUE));
         loanInstallmentRepository.saveAll(overdue);
     }
 
     @Transactional(readOnly = true)
     public DisbursedLoansReport getDisbursedLoansReport(String period) {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        LocalDate startDate;
-        LocalDate endDate;
-        switch (period) {
-            case "today" -> {
-                startDate = today;
-                endDate = today.plusDays(1);
-            }
-            case "month" -> {
-                startDate = today.withDayOfMonth(1);
-                endDate = startDate.plusMonths(1);
-            }
-            default -> throw new BusinessRuleViolationException(
-                    "Report period must be either 'today' or 'month'");
-        }
+
+        LocalDate startDate = loanRecord.getStartDateAndEndDate(period)[0];
+        LocalDate endDate = loanRecord.getStartDateAndEndDate(period)[1];
 
         List<LoanRecord> loans = loanRecordRepository
                 .findByApprovedAtGreaterThanEqualAndApprovedAtLessThanOrderByApprovedAtDesc(
-                        startDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
-                        endDate.atStartOfDay(ZoneOffset.UTC).toInstant());
+                        startDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant(),
+                        endDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant());
         List<DisbursedLoanItem> items = loans.stream()
                 .map(loan -> new DisbursedLoanItem(
                         loan.getId(),
@@ -226,9 +213,9 @@ public class LoanRecordService {
                 period, startDate, endDate.minusDays(1), items.size(), totalPrincipal, items);
     }
 
-    @Transactional(readOnly = true)
+
     public OverdueInstallmentsReport getOverdueInstallmentsReport() {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = LocalDate.now(ZoneId.of("GMT+2"));
         List<LoanInstallment> overdue = loanInstallmentRepository.findOverdueInstallments(
                 today,
                 List.of(InstallmentStatus.PENDING, InstallmentStatus.OVERDUE),
@@ -251,28 +238,5 @@ public class LoanRecordService {
         return new OverdueInstallmentsReport(today, items.size(), totalOutstanding, items);
     }
 
-    private void addInstallments(LoanRecord loanRecord) {
-        BigDecimal totalRepayment = loanRecord.getAmount()
-                .add(loanRecord.getAmount()
-                        .multiply(loanRecord.getInterestRate())
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
-                .setScale(2, RoundingMode.HALF_UP);
-        BigDecimal regularAmount = totalRepayment
-                .divide(BigDecimal.valueOf(loanRecord.getTerm()), 2, RoundingMode.DOWN);
-        BigDecimal scheduledTotal = BigDecimal.ZERO;
-        LocalDate approvalDate = LocalDate.now(ZoneOffset.UTC);
 
-        for (int installmentNumber = 1; installmentNumber <= loanRecord.getTerm(); installmentNumber++) {
-            BigDecimal installmentAmount = installmentNumber == loanRecord.getTerm()
-                    ? totalRepayment.subtract(scheduledTotal)
-                    : regularAmount;
-            loanRecord.addInstallment(new LoanInstallment(
-                    loanRecord,
-                    installmentNumber,
-                    installmentAmount,
-                    approvalDate.plusMonths(installmentNumber)
-            ));
-            scheduledTotal = scheduledTotal.add(installmentAmount);
-        }
-    }
 }

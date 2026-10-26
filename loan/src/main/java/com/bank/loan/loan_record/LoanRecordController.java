@@ -21,7 +21,7 @@ public class LoanRecordController {
     private final LoanRecordService loanRecordService;
     private final BulkCsvImportService bulkCsvImportService;
 
-    @PostMapping("/loan-record/create")
+    @PostMapping("/loan-records/create")
     @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<LoanRecord> createLoanRecord(
             @Valid @RequestBody LoanRequestDTO request,

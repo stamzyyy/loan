@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +18,7 @@ class LoanSearchController {
     }
 
     @GetMapping("/api/loans/search")
-    public Page<LoanSearchDTO> search(
+    public ResponseEntity<Page<LoanSearchDTO>> search(
             LoanSearchDTO criteria,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -27,6 +28,6 @@ class LoanSearchController {
         Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        return searchService.executeSearch(criteria, pageable);
+        return ResponseEntity.ok(searchService.executeSearch(criteria, pageable));
     }
 }
