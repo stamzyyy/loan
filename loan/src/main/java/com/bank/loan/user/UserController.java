@@ -14,16 +14,16 @@ import org.springframework.web.bind.annotation.*;
 
 public class UserController {
 
-    private final UserService service;
+    private final UserService userService;
 
-    @PostMapping
+    @PostMapping("api/create-user")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CreateUserResponse> create(
             @Valid @RequestBody CreateUserRequest req
     ) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(service.create(req));
+                .body(userService.create(req));
     }
 
 }
