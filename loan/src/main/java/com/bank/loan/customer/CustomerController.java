@@ -1,8 +1,7 @@
 package com.bank.loan.customer;
 
 
-import com.bank.loan.bulk.CsvImportResult;
-import com.bank.loan.bulk.BulkCsvImportService;
+
 import com.bank.loan.installments.PaymentReceipt;
 import com.bank.loan.installments.PaymentRequest;
 import com.bank.loan.loan_record.LoanRecordService;
@@ -16,24 +15,26 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final CustomerService service;
-    private final LoanRecordService loanRecordService;
-    private final BulkCsvImportService bulkCsvImportService;
+     CustomerService customerService;
+     LoanRecordService loanRecordService;
+
 
     @PostMapping
     public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerService.create(request));
     }
 
     @PostMapping(value = "/bulk-upload", consumes = "multipart/form-data")
     @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")
-    public ResponseEntity<CsvImportResult> bulkUpload(@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(bulkCsvImportService.importCustomers(file));
+    public ResponseEntity<String> bulkUpload(@RequestPart("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(customerService.uploadCustomers(file));
     }
 
     @PutMapping("update/{id}")
@@ -41,12 +42,12 @@ public class CustomerController {
             @PathVariable Long id,
             @Valid @RequestBody CustomerRequest request
     ) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity.ok(customerService.update(id, request));
     }
 
     @GetMapping("get-id/{id}")
     public ResponseEntity<CustomerResponse> get(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getId(id));
+        return ResponseEntity.ok(customerService.getId(id));
     }
 
     @GetMapping
@@ -54,12 +55,12 @@ public class CustomerController {
             @RequestParam(defaultValue = "") String q,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(service.search(q, pageable));
+        return ResponseEntity.ok(customerService.search(q, pageable));
     }
 
     @DeleteMapping("delete/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+        customerService.delete(id);
         return ResponseEntity.noContent().build();
     }
 

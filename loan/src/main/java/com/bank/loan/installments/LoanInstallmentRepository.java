@@ -11,8 +11,9 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
-public interface LoanInstallmentRepository extends JpaRepository<LoanInstallment, Long>, RevisionRepository<LoanInstallment, Long, Long> {
+public interface LoanInstallmentRepository extends JpaRepository<LoanInstallment, Long>{
     List<LoanInstallment> findByStatusAndDueDateBefore(InstallmentStatus status, LocalDate date);
 
     @Query("""
@@ -45,5 +46,5 @@ public interface LoanInstallmentRepository extends JpaRepository<LoanInstallment
             @Param("installmentStatuses") Collection<InstallmentStatus> installmentStatuses
     );
 
-    long countByLoanRecordIdAndStatusNot(Long loanRecordId, InstallmentStatus status);
+    long countByLoanRecordIdAndStatusNot(long loanRecordId, InstallmentStatus status);
 }

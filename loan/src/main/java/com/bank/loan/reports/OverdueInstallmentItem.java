@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 public record OverdueInstallmentItem(
         Long installmentId,
-        Long loanId,
+        long loanId,
         String customerNationalId,
         String customerName,
         Integer installmentNumber,

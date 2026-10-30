@@ -1,15 +1,28 @@
 package com.bank.loan.customer;
 
-import com.bank.loan.exceptions.*;
+import com.bank.loan.exceptions.DuplicateResourceException;
+import com.bank.loan.exceptions.ResourceNotFoundException;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import com.bank.loan.customer.Customer.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+
 public class CustomerService {
     private final CustomerRepository customerRepository;
 
@@ -78,4 +91,38 @@ public class CustomerService {
                 customer.getPhone());
     }
 
+    public String uploadCustomers(MultipartFile file) throws IOException {
+        Set<Customer> students = parseCsv(file);
+
+        customerRepository.saveAll(students);
+        return students.size() + " were successfully uploaded!";
+    }
+
+    private Set<Customer> parseCsv(MultipartFile file) throws IOException {
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            HeaderColumnNameMappingStrategy<CustomerCsvRepresentation> strategy = new HeaderColumnNameMappingStrategy<>();
+
+            strategy.setType(CustomerCsvRepresentation.class);
+            CsvToBean<CustomerCsvRepresentation> csvToBean = new CsvToBeanBuilder<CustomerCsvRepresentation>(reader)
+                    .withMappingStrategy(strategy)
+                    .withIgnoreEmptyLine(true)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .build();
+
+          return csvToBean.parse()
+                    .stream()
+                    .map(csvLine -> Customer.builder()
+                            .fullName(csvLine.getFullName())
+                            .nationalId(csvLine.getNationalId())
+                            .phone(csvLine.getPhone())
+                            .email(csvLine.getEmail())
+                            .build()
+
+                    )
+                    .collect(Collectors.toSet());
+
+
+        }
+
+    }
 }

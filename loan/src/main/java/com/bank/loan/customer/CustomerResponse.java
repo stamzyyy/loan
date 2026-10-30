@@ -1,7 +1,7 @@
 package com.bank.loan.customer;
 
 public record CustomerResponse(
-        Long id,
+        long id,
         String fullName,
         String nationalId,
         String email,

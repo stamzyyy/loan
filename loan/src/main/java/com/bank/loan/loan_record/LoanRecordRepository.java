@@ -8,14 +8,15 @@ import org.springframework.data.repository.history.RevisionRepository;
 import java.util.Collection;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
-public interface LoanRecordRepository extends JpaRepository<LoanRecord, Long>, RevisionRepository<LoanRecord, Long, Long> {
+public interface LoanRecordRepository extends JpaRepository<LoanRecord, Long>{
 
     Page<LoanRecord> findByCustomerNationalIdContainingIgnoreCase(String nationalId, Pageable pageable);
 
     Page<LoanRecord> findByStatus(Status status, Pageable pageable);
 
-    long countByCustomerIdAndStatusIn(Long customerId, Collection<Status> statuses);
+    long countByCustomerIdAndStatusIn(long customerId, Collection<Status> statuses);
 
     List<LoanRecord> findByApprovedAtGreaterThanEqualAndApprovedAtLessThanOrderByApprovedAtDesc(
             Instant start,

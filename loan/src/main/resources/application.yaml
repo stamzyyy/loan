@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: loan
+  datasource:
+    url: jdbc:sqlserver://10.106.60.5:1433;databaseName=loanmanagement;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: P@ssw0rd123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.SQLServerDialect
+  profiles:
+    active: dev
+
+logging:
+  level:
+    org.springframework.security: trace
+
+loan:
+  limits:
+    min-amount: 500.0
+    max-amount: 50000.0
+    max-term-months: 36

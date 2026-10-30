@@ -8,7 +8,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,7 +22,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Audited
 @Table(name = "loan_records")
 public class LoanRecord {
     @Id
@@ -123,7 +121,7 @@ public class LoanRecord {
         }
     }
 
-public LocalDate[] getStartDateAndEndDate(String period) {
+public static LocalDate[] getStartDateAndEndDate(String period) {
     LocalDate today = LocalDate.now(ZoneId.of("GMT+2"));
     LocalDate startDate;
     LocalDate endDate;

@@ -1,7 +1,5 @@
 package com.bank.loan.loan_record;
 
-import com.bank.loan.bulk.BulkCsvImportService;
-import com.bank.loan.bulk.CsvImportResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class LoanRecordController {
 
     private final LoanRecordService loanRecordService;
-    private final BulkCsvImportService bulkCsvImportService;
+
 
     @PostMapping("/loan-records/create")
     @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")
@@ -31,14 +29,14 @@ public class LoanRecordController {
                 .body(loanRecordService.createLoanRecord(request, authentication.getName()));
     }
 
-    @PostMapping(value = "/loan-records/bulk-upload", consumes = "multipart/form-data")
-    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")
-    public ResponseEntity<CsvImportResult> bulkUpload(
-            @RequestParam("file") MultipartFile file,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(bulkCsvImportService.importLoans(file, authentication.getName()));
-    }
+//    @PostMapping(value = "/loan-records/bulk-upload", consumes = "multipart/form-data")
+//    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")
+//    public ResponseEntity<CsvImportResult> bulkUpload(
+//            @RequestParam("file") MultipartFile file,
+//            Authentication authentication
+//    ) {
+//        return ResponseEntity.ok(bulkCsvImportService.importLoans(file, authentication.getName()));
+//    }
 
     @GetMapping("/loan-records/{id}")
     @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'MANAGER', 'ADMIN')")

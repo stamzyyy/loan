@@ -8,7 +8,7 @@ import java.util.List;
 
 public record PaymentReceipt(BigDecimal amount, List<Allocation> allocations) {
     public record Allocation(
-            Long loanId,
+            long loanId,
             Integer installmentNumber,
             BigDecimal amountApplied,
             BigDecimal remainingInstallmentAmount,

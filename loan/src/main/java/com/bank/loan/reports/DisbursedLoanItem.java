@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public record DisbursedLoanItem(
-        Long loanId,
+        long loanId,
         String customerNationalId,
         String customerName,
         BigDecimal principal,

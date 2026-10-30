@@ -1,13 +1,11 @@
 package com.bank.loan.customer;
 
-import com.bank.loan.exceptions.ResourceNotFoundException;
+
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 
 @Entity
@@ -15,6 +13,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,9 +34,6 @@ public class Customer {
 
     @Column(nullable = false)
     private boolean hasLoan = false;
-
-
-
 
     private Instant createdAt = Instant.now();
 

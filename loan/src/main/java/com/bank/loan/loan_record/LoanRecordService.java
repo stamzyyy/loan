@@ -36,7 +36,7 @@ public class LoanRecordService {
     private final LoanInstallmentRepository loanInstallmentRepository;
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
-    private final LoanRecord loanRecord;
+
 
     @Transactional
     public LoanRecord createLoanRecord(LoanRequestDTO loanRequest, String username) {
@@ -187,15 +187,16 @@ public class LoanRecordService {
 
     @Transactional(readOnly = true)
     public DisbursedLoansReport getDisbursedLoansReport(String period) {
-
-        LocalDate startDate = loanRecord.getStartDateAndEndDate(period)[0];
-        LocalDate endDate = loanRecord.getStartDateAndEndDate(period)[1];
+        LocalDate[] dates = LoanRecord.getStartDateAndEndDate(period);
+        LocalDate startDate = dates[0];
+        LocalDate endDate = dates[1];
 
         List<LoanRecord> loans = loanRecordRepository
                 .findByApprovedAtGreaterThanEqualAndApprovedAtLessThanOrderByApprovedAtDesc(
                         startDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant(),
                         endDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant());
-        List<DisbursedLoanItem> items = loans.stream()
+        List<DisbursedLoanItem> items = loans
+                .stream()
                 .map(loan -> new DisbursedLoanItem(
                         loan.getId(),
                         loan.getCustomer().getNationalId(),
@@ -220,7 +221,8 @@ public class LoanRecordService {
                 today,
                 List.of(InstallmentStatus.PENDING, InstallmentStatus.OVERDUE),
                 ACTIVE_LOAN_STATUSES);
-        List<OverdueInstallmentItem> items = overdue.stream()
+        List<OverdueInstallmentItem> items = overdue
+                .stream()
                 .map(installment -> new OverdueInstallmentItem(
                         installment.getId(),
                         installment.getLoanRecord().getId(),
@@ -232,7 +234,8 @@ public class LoanRecordService {
                         installment.getAmountPaid(),
                         installment.getRemainingAmount()))
                 .toList();
-        BigDecimal totalOutstanding = items.stream()
+        BigDecimal totalOutstanding = items
+                .stream()
                 .map(OverdueInstallmentItem::outstandingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new OverdueInstallmentsReport(today, items.size(), totalOutstanding, items);
