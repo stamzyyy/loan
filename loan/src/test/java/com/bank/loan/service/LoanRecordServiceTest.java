@@ -1,15 +1,15 @@
 package com.bank.loan.service;
 
 import com.bank.loan.customer.Customer;
+import com.bank.loan.customer.CustomerRepository;
 import com.bank.loan.installments.InstallmentStatus;
 import com.bank.loan.installments.LoanInstallment;
+import com.bank.loan.installments.LoanInstallmentRepository;
 import com.bank.loan.installments.PaymentReceipt;
 import com.bank.loan.loan_record.LoanRecord;
+import com.bank.loan.loan_record.LoanRecordRepository;
 import com.bank.loan.loan_record.LoanRecordService;
 import com.bank.loan.loan_record.Status;
-import com.bank.loan.customer.CustomerRepository;
-import com.bank.loan.installments.LoanInstallmentRepository;
-import com.bank.loan.loan_record.LoanRecordRepository;
 import com.bank.loan.user.User;
 import com.bank.loan.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -20,12 +20,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +43,27 @@ class LoanRecordServiceTest {
 
     @InjectMocks
     private LoanRecordService loanRecordService;
+
+    private static User user(Long id, String username) {
+        User user = new User();
+        user.setId(id);
+        user.setUsername(username);
+        return user;
+    }
+
+    private static LoanRecord loan(Long id, Customer customer) {
+        LoanRecord loan = new LoanRecord(customer, BigDecimal.ONE, BigDecimal.ZERO, 1, null);
+        loan.setId(id);
+        loan.setStatus(Status.APPROVED);
+        return loan;
+    }
+
+    private static LoanInstallment installment(LoanRecord loan, int number, String amount) {
+        LoanInstallment installment = new LoanInstallment(
+                loan, number, new BigDecimal(amount), LocalDate.now().plusMonths(number));
+        loan.addInstallment(installment);
+        return installment;
+    }
 
     @Test
     void approvalGeneratesMonthlyInstallmentsWithFlatInterest() {
@@ -64,7 +87,7 @@ class LoanRecordServiceTest {
         assertEquals(new BigDecimal("1120.00"), approvedLoan.getInstallments().stream()
                 .map(LoanInstallment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
-        assertEquals(LocalDate.now(ZoneOffset.UTC).plusMonths(1),
+        assertEquals(LocalDate.now(ZoneId.of("GMT+2")).plusMonths(1),
                 approvedLoan.getInstallments().get(0).getDueDate());
         assertTrue(approvedLoan.getInstallments().stream()
                 .allMatch(installment -> installment.getStatus() == InstallmentStatus.PENDING));
@@ -104,32 +127,11 @@ class LoanRecordServiceTest {
     void unpaidInstallmentIsReportedOverdueAfterItsDueDate() {
         LoanInstallment installment = new LoanInstallment(
                 loan(10L, new Customer()), 1, new BigDecimal("10.00"),
-                LocalDate.now(ZoneOffset.UTC).minusDays(1));
+                LocalDate.now(ZoneId.of("GMT+2")).minusDays(1));
 
         assertEquals(InstallmentStatus.OVERDUE, installment.getStatus());
 
         installment.setStatus(InstallmentStatus.PAID);
         assertEquals(InstallmentStatus.PAID, installment.getStatus());
-    }
-
-    private static User user(Long id, String username) {
-        User user = new User();
-        user.setId(id);
-        user.setUsername(username);
-        return user;
-    }
-
-    private static LoanRecord loan(Long id, Customer customer) {
-        LoanRecord loan = new LoanRecord(customer, BigDecimal.ONE, BigDecimal.ZERO, 1, null);
-        loan.setId(id);
-        loan.setStatus(Status.APPROVED);
-        return loan;
-    }
-
-    private static LoanInstallment installment(LoanRecord loan, int number, String amount) {
-        LoanInstallment installment = new LoanInstallment(
-                loan, number, new BigDecimal(amount), LocalDate.now().plusMonths(number));
-        loan.addInstallment(installment);
-        return installment;
     }
 }

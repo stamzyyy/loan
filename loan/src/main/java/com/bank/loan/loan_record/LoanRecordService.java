@@ -193,8 +193,8 @@ public class LoanRecordService {
 
         List<LoanRecord> loans = loanRecordRepository
                 .findByApprovedAtGreaterThanEqualAndApprovedAtLessThanOrderByApprovedAtDesc(
-                        startDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant(),
-                        endDate.atStartOfDay(ZoneId.of("GMT+2")).toInstant());
+                        startDate.atStartOfDay(ZoneId.of("GMT+2")).toLocalDate(),
+                        endDate.atStartOfDay(ZoneId.of("GMT+2")).toLocalDate());
         List<DisbursedLoanItem> items = loans
                 .stream()
                 .map(loan -> new DisbursedLoanItem(

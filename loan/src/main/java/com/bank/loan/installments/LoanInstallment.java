@@ -9,7 +9,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 @Entity
 @Getter
@@ -60,7 +60,7 @@ public class LoanInstallment {
 
     public InstallmentStatus getStatus() {
         if (status != InstallmentStatus.PAID
-                && dueDate.isBefore(LocalDate.now(ZoneOffset.UTC))) {
+                && dueDate.isBefore(LocalDate.now(ZoneId.of("GMT+2")))) {
             return InstallmentStatus.OVERDUE;
         }
         return status;

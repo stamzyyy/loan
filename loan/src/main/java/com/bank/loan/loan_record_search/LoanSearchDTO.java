@@ -1,14 +1,14 @@
 package com.bank.loan.loan_record_search;
+
 import com.bank.loan.loan_record.Status;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
 
-public record LoanSearchDTO (
+public record LoanSearchDTO(
         BigDecimal amount,
         Integer term,
         Status status,
-        Instant createdAt
-){
+        LocalDate createdAt
+) {
 }

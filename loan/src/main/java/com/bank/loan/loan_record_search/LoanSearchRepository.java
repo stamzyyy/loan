@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 interface LoanSearchRepository extends JpaRepository<LoanRecord, Long>, JpaSpecificationExecutor<LoanRecord> {
 
 }
-// Leave this completely empty!
+
 

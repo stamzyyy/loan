@@ -1,7 +1,6 @@
 package com.bank.loan.reports;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 public record DisbursedLoanItem(
         long loanId,
@@ -10,7 +9,7 @@ public record DisbursedLoanItem(
         BigDecimal principal,
         BigDecimal interestRate,
         Integer termMonths,
-        Instant disbursedAt,
+        java.time.LocalDate disbursedAt,
         String approvedBy
 ) {
 }

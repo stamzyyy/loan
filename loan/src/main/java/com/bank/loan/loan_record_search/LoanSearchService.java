@@ -18,14 +18,7 @@ class LoanSearchService {
         Specification<LoanRecord> spec = LoanSearchSpecification.withCriteria(criteria);
 
         return repository.findAll(spec, pageable)
-                .map(loan -> new LoanSearchDTO( loan.getAmount(), loan.getTerm(),  loan.getStatus(), loan.getCreatedAt()));
+                .map(loan -> new LoanSearchDTO(loan.getAmount(), loan.getTerm(), loan.getStatus(), loan.getCreatedAt()));
     }
 }
 
-//String createdBy,
-//String approvedBy,
-//BigDecimal amount,
-//Integer term,
-//Status status,
-//Instant createdAt
-/// /){

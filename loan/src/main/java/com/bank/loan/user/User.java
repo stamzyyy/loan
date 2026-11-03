@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
 
 @Entity
 @Getter
@@ -16,9 +14,7 @@ import java.util.UUID;
 @Table(name = "users")
 public class User {
 
-
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //    @GeneratedValue(strategy = GenerationType.IDENTITY)
 //    private Long id; // not recommended (1. Wrapper class accepts nulls, 2. security)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +30,5 @@ public class User {
     private Role role;
 
     private boolean enabled = true;
-
-
-
 
 }

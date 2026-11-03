@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,7 +108,7 @@ public class CustomerService {
                     .withIgnoreLeadingWhiteSpace(true)
                     .build();
 
-          return csvToBean.parse()
+            return csvToBean.parse()
                     .stream()
                     .map(csvLine -> Customer.builder()
                             .fullName(csvLine.getFullName())

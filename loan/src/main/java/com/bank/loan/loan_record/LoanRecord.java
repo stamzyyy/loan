@@ -8,20 +8,25 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "loan_records")
 public class LoanRecord {
     @Id
@@ -46,20 +51,28 @@ public class LoanRecord {
     private Status status = Status.APPLIED;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", nullable = false, updatable = false)
+    @CreatedBy
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
+    @JoinColumn(name = "approved_by", insertable = false)
+    @LastModifiedBy
     private User approvedBy;
 
     @Column(length = 1000)
     private String rejectionReason;
 
+    @CreatedDate
     @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private LocalDate createdAt = LocalDate.now();
 
-    private Instant approvedAt;
+    private LocalDate approvedAt;
+
+
+    @LastModifiedDate
+    @Column(insertable = false)
+    private LocalDateTime lastModified;
 
     @OneToMany(mappedBy = "loanRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("installmentNumber ASC")
@@ -75,10 +88,31 @@ public class LoanRecord {
 
     }
 
+    public static LocalDate[] getStartDateAndEndDate(String period) {
+        LocalDate today = LocalDate.now(ZoneId.of("GMT+2"));
+        LocalDate startDate;
+        LocalDate endDate;
+        switch (period) {
+            case "today" -> {
+                startDate = today;
+                endDate = today.plusDays(1);
+            }
+            case "month" -> {
+                startDate = today.withDayOfMonth(1);
+                endDate = startDate.plusMonths(1);
+            }
+            default -> throw new BusinessRuleViolationException(
+                    "Report period must be either 'today' or 'month'");
+        }
+
+        return new LocalDate[]{startDate, endDate};
+
+    }
+
     public void approve(User checker) {
         this.status = Status.APPROVED;
         this.approvedBy = checker;
-        this.approvedAt = Instant.now();
+        this.approvedAt = LocalDate.now();
         this.customer.setHasLoan(true);
     }
 
@@ -120,26 +154,5 @@ public class LoanRecord {
             scheduledTotal = scheduledTotal.add(installmentAmount);
         }
     }
-
-public static LocalDate[] getStartDateAndEndDate(String period) {
-    LocalDate today = LocalDate.now(ZoneId.of("GMT+2"));
-    LocalDate startDate;
-    LocalDate endDate;
-    switch (period) {
-        case "today" -> {
-            startDate = today;
-            endDate = today.plusDays(1);
-        }
-        case "month" -> {
-            startDate = today.withDayOfMonth(1);
-            endDate = startDate.plusMonths(1);
-        }
-        default -> throw new BusinessRuleViolationException(
-                "Report period must be either 'today' or 'month'");
-    }
-
-    return new LocalDate[]{startDate, endDate};
-
-}
 
 }
